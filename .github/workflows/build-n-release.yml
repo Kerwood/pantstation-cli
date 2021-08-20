@@ -1,0 +1,32 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - "!*"
+    tags:
+      - "v*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-n-release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: |
+        sudo apt update
+        sudo apt install musl-tools
+        rustup target add x86_64-unknown-linux-musl
+        cargo build --release --target x86_64-unknown-linux-musl
+        cp -v target/x86_64-unknown-linux-musl/release/pantstation ./pantstation-x86_64-unknown-linux-musl
+        strip ./pantstation-x86_64-unknown-linux-musl
+    - name: Automatic Releases
+      uses: marvinpinto/action-automatic-releases@v1.2.0
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: false
+        files: |
+          ./pantstation-x86_64-unknown-linux-musl

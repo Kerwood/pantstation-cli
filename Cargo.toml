@@ -19,3 +19,4 @@ serde = { version = "1.0.127", features = ["derive"] }
 structopt = "0.3.22"
 colored = "2.0.0"
 prettytable-rs = "0.8.0"
+openssl = { version = "0.10.36", features = ["vendored"] }
