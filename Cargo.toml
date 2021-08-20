@@ -1,0 +1,21 @@
+[package]
+name = "pantstation"
+version = "0.1.0"
+edition = "2018"
+
+[[bin]]
+name = "pantstation"
+path = "src/bin.rs"
+
+[lib]
+name = "pantstation"
+path = "src/lib.rs"
+
+[dependencies]
+reqwest = "0.11.4"
+tokio = { version = "1.8.0", features = ["full"] }
+serde_json = "1.0.66"
+serde = { version = "1.0.127", features = ["derive"] }
+structopt = "0.3.22"
+colored = "2.0.0"
+prettytable-rs = "0.8.0"
