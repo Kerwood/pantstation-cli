@@ -9,7 +9,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  cli-name: 'pantstation'
+  app-name: 'pantstation'
 
 jobs:
   rustfmt:
@@ -41,14 +41,19 @@ jobs:
           override: true
 
       - name: Build
-        run: cargo build --all --release && strip target/release/${{ env.cli-name }} && mv target/release/${{ env.cli-name }} target/release/${{ env.cli-name }}-x86_64-linux
+        run: |
+          sudo apt update && sudo apt install musl-tools
+          rustup target add x86_64-unknown-linux-musl
+          cargo build --release --target x86_64-unknown-linux-musl
+          strip target/x86_64-unknown-linux-musl/release/${{ env.app-name }}
+          mv target/x86_64-unknown-linux-musl/release/${{ env.app-name }} target/x86_64-unknown-linux-musl/release/${{ env.app-name }}-x86_64-unknown-linux-musl
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v1-release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/${{ env.cli-name }}-x86_64-linux
-          asset_name: ${{ env.cli-name }}-x86_64-linux
+          file: target/x86_64-unknown-linux-musl/release/${{ env.app-name }}-x86_64-unknown-linux-musl
+          asset_name: ${{ env.app-name }}-x86_64-unknown-linux-musl
           tag: ${{ github.ref }}
           overwrite: true
 
@@ -73,14 +78,14 @@ jobs:
           override: true
 
       - name: Build for MacOSX
-        run: cargo build --all --release && strip target/release/${{ env.cli-name }} && mv target/release/${{ env.cli-name }} target/release/${{ env.cli-name }}-x86_64-apple-darwin
+        run: cargo build --all --release && strip target/release/${{ env.app-name }} && mv target/release/${{ env.app-name }} target/release/${{ env.app-name }}-x86_64-apple-darwin
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v1-release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/${{ env.cli-name }}-x86_64-apple-darwin
-          asset_name: ${{ env.cli-name }}-x86_64-apple-darwin
+          file: target/release/${{ env.app-name }}-x86_64-apple-darwin
+          asset_name: ${{ env.app-name }}-x86_64-apple-darwin
           tag: ${{ github.ref }}
 
   build-win:
@@ -112,6 +117,6 @@ jobs:
         uses: svenstaro/upload-release-action@v1-release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/${{ env.cli-name }}.exe
-          asset_name: ${{ env.cli-name }}-x86_64-windows.exe
+          file: target/release/${{ env.app-name }}.exe
+          asset_name: ${{ env.app-name }}-x86_64-windows.exe
           tag: ${{ github.ref }}
