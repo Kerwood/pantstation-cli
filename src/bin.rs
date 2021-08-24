@@ -88,7 +88,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     if station.operational_status == "custom" {
                         println!("\n{}", "Operational Status".bold());
-                        println!("{}", strip_paragraf_chars(&station.operational_status_text).red());
+                        println!(
+                            "{}",
+                            strip_paragraf_chars(&station.operational_status_text).red()
+                        );
                     }
 
                     if station.important_notification && station.important_notification_text != None
