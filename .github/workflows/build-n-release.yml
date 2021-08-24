@@ -9,24 +9,109 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  cli-name: 'pantstation'
 
 jobs:
-  build-n-release:
+  rustfmt:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: |
-        sudo apt update
-        sudo apt install musl-tools
-        rustup target add x86_64-unknown-linux-musl
-        cargo build --release --target x86_64-unknown-linux-musl
-        cp -v target/x86_64-unknown-linux-musl/release/pantstation ./pantstation-x86_64-unknown-linux-musl
-        strip ./pantstation-x86_64-unknown-linux-musl
-    - name: Automatic Releases
-      uses: marvinpinto/action-automatic-releases@v1.2.0
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        prerelease: false
-        files: |
-          ./pantstation-x86_64-unknown-linux-musl
+      - uses: actions/checkout@v1
+      - run: rustup component add rustfmt
+      - run: cargo fmt -- --check
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v1.0.1
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: beta
+          default: true
+          override: true
+
+      - name: Build
+        run: cargo build --all --release && strip target/release/${{ env.cli-name }} && mv target/release/${{ env.cli-name }} target/release/${{ env.cli-name }}-x86_64-linux
+
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ env.cli-name }}-x86_64-linux
+          asset_name: ${{ env.cli-name }}-x86_64-linux
+          tag: ${{ github.ref }}
+          overwrite: true
+
+  build-osx:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Cache Rust dependencies
+        uses: actions/cache@v1.0.1
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: beta
+          target: x86_64-apple-darwin
+          default: true
+          override: true
+
+      - name: Build for MacOSX
+        run: cargo build --all --release && strip target/release/${{ env.cli-name }} && mv target/release/${{ env.cli-name }} target/release/${{ env.cli-name }}-x86_64-apple-darwin
+
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ env.cli-name }}-x86_64-apple-darwin
+          asset_name: ${{ env.cli-name }}-x86_64-apple-darwin
+          tag: ${{ github.ref }}
+
+  build-win:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v1.0.1
+        with:
+          path: target
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+
+      - name: Install latest rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+          override: true
+
+      - name: Build for Windows
+        run: cargo build --all --release
+
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/${{ env.cli-name }}.exe
+          asset_name: ${{ env.cli-name }}-x86_64-windows.exe
+          tag: ${{ github.ref }}
