@@ -3,7 +3,15 @@ use prettytable::format;
 use reqwest;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use serde_json::Value;
+use voca_rs::Voca;
+
+pub type Root = Vec<RootElement>;
+
+#[derive(Serialize, Deserialize)]
+pub struct RootElement {
+    #[serde(rename = "acf")]
+    station: Station,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Station {
@@ -23,12 +31,38 @@ pub struct Location {
     pub lat: f32,
     pub lng: f32,
     pub name: String,
-    pub street_number: String,
+    pub street_number: Option<String>,
     pub street_name: String,
     pub city: String,
     pub post_code: String,
     pub country: String,
     pub country_short: String,
+}
+
+impl Station {
+    pub fn clean(self) -> Station {
+        let trimmer = |string: String| -> String {
+            string
+                ._strip_tags()
+                .replace("&nbsp;", "")
+                .trim()
+                .to_string()
+        };
+
+        Station {
+            location: self.location,
+            opening_hours: trimmer(self.opening_hours),
+            operational_status: trimmer(self.operational_status),
+            operational_status_text: trimmer(self.operational_status_text),
+            station_type: trimmer(self.station_type),
+            short_description: trimmer(self.short_description),
+            important_notification: self.important_notification,
+            important_notification_text: match self.important_notification_text {
+                Option::Some(s) => Some(trimmer(s)),
+                Option::None => None,
+            },
+        }
+    }
 }
 
 pub async fn get_station_data() -> Result<Vec<Station>, Box<dyn std::error::Error>> {
@@ -43,29 +77,12 @@ pub async fn get_station_data() -> Result<Vec<Station>, Box<dyn std::error::Erro
         .text()
         .await?;
 
-    let acf: Vec<Value> = serde_json::from_str(&res)?;
+    let root: Root = serde_json::from_str(&res)?;
 
-    for item in acf.iter() {
-        let station = item["acf"].clone();
-        stations.push(serde_json::from_value(station)?);
+    for root_element in root.into_iter() {
+        stations.push(root_element.station.clean());
     }
     Ok(stations)
-}
-
-pub fn strip_trailing_newline(input: &str) -> &str {
-    input
-        .strip_suffix("<br />\r\n")
-        .or(input.strip_suffix("\r\n"))
-        .or(input.strip_suffix("\n"))
-        .unwrap_or(input)
-}
-
-pub fn strip_paragraf_chars(input: &str) -> &str {
-    input
-        .strip_suffix("</p>\n")
-        .unwrap_or(input)
-        .strip_prefix("<p>")
-        .unwrap_or(input)
 }
 
 pub fn color_status(input: &str) -> ColoredString {
@@ -94,6 +111,7 @@ pub fn format_type(status: &str) -> &str {
         "dropngo" => "Drop'n Go",
         "sack" => "Sack",
         "seperateglas" => "Seperate glass",
-        &_ => "unknown_type",
+        "app" => "App",
+        &_ => "",
     }
 }

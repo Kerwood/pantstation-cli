@@ -33,11 +33,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         &station.location.city,
                         format!(
                             "{} {}",
-                            &station.location.street_name, &station.location.street_number
+                            &station.location.street_name,
+                            &station
+                                .location
+                                .street_number
+                                .to_owned()
+                                .unwrap_or_default()
                         ),
                         format!("{}", color_status(&station.operational_status)),
                         format_type(&station.station_type),
-                        strip_trailing_newline(&station.opening_hours),
+                        match station.operational_status.as_ref() {
+                            "custom" => station.operational_status_text.red().to_string(),
+                            _ => station.opening_hours.to_owned(),
+                        },
                     ));
                 }
                 println!();
@@ -63,7 +71,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         "{}, {} {}, {}",
                         station.location.city,
                         station.location.street_name,
-                        station.location.street_number,
+                        station
+                            .location
+                            .street_number
+                            .to_owned()
+                            .unwrap_or_default(),
                         station.location.post_code
                     );
                     let google_maps = format!(
@@ -80,29 +92,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         "Station Type:".bold(),
                         format_type(&station.station_type)
                     );
-                    println!("{} {}", "Opening Hours:".bold(), station.opening_hours);
+                    println!("{} {}", "Opening Hours:".bold(), &station.opening_hours);
                     println!("{} {}", "Location:".bold(), google_maps);
 
                     println!("{}", "Description".bold());
-                    println!("{}", strip_paragraf_chars(&station.short_description));
+                    println!("{}", &station.short_description);
 
                     if station.operational_status == "custom" {
                         println!("\n{}", "Operational Status".bold());
-                        println!(
-                            "{}",
-                            strip_paragraf_chars(&station.operational_status_text).red()
-                        );
+                        println!("{}", &station.operational_status_text.red());
                     }
 
-                    if station.important_notification && station.important_notification_text != None
+                    if station.important_notification
+                        && station.important_notification_text != Some("".to_string())
                     {
                         println!("\n{}", "Important Notification".bold());
                         println!(
                             "{}",
-                            strip_paragraf_chars(
-                                &station.important_notification_text.as_ref().unwrap()
-                            )
-                            .red()
+                            &station
+                                .important_notification_text
+                                .to_owned()
+                                .unwrap_or_default()
+                                .red()
                         );
                     }
                     println!();

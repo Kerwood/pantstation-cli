@@ -1,6 +1,6 @@
 [package]
 name = "pantstation"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2018"
 
 [[bin]]
@@ -20,3 +20,4 @@ structopt = "0.3.22"
 colored = "2.0.0"
 prettytable-rs = "0.8.0"
 openssl = { version = "0.10.36", features = ["vendored"] }
+voca_rs = "1.14.0"
