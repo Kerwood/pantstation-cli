@@ -44,7 +44,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         format_type(&station.station_type),
                         match station.operational_status.as_ref() {
                             "custom" => station.operational_status_text.red().to_string(),
-                            _ => station.opening_hours.to_owned(),
+                            _ => station
+                                .opening_hours
+                                .lines()
+                                .next()
+                                .unwrap_or(&station.opening_hours)
+                                .to_string(),
                         },
                     ));
                 }
