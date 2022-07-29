@@ -80,7 +80,7 @@ jobs:
       - name: Build for MacOSX
         run: |
           cargo build --all --release
-          upx --best --lzma target/release/${{ env.app-name }}
+          strip target/release/${{ env.app-name }}
           mv target/release/${{ env.app-name }} target/release/${{ env.app-name }}-x86_64-apple-darwin
 
       - name: Upload binaries to release
