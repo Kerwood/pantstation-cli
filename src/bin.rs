@@ -103,7 +103,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("{}", "Description".bold());
                     println!("{}", &station.short_description);
 
-                    if station.operational_status == "custom" {
+                    if station.operational_status == "custom"
+                        || station.operational_status == "breakdown"
+                    {
                         println!("\n{}", "Operational Status".bold());
                         println!("{}", &station.operational_status_text.red());
                     }
